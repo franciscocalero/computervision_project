@@ -1,7 +1,6 @@
 !pip install torch
 !pip install accelerate
 !pip install git+https://github.com/huggingface/diffusers
-!git clone https://github.com/franciscocalero/computervision_project.git
 !mv -v /content/computervision_project/* /content/
 !pip install -r requirements.txt
 
