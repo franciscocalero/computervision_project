@@ -71,7 +71,7 @@ def image_grid(imgs, rows, cols):
     return grid
 
 
-def log_validation(vae, text_encoder, tokenizer, unet, controlnet, args, accelerator, weight_dtype, step):
+def log_validation(vae, text_encoder, tokenizer, unet, controlnet, args, accelerator, weight_dtype, step, output_validation_dir):
     logger.info("Running validation... ")
 
     controlnet = accelerator.unwrap_model(controlnet)
@@ -131,6 +131,9 @@ def log_validation(vae, text_encoder, tokenizer, unet, controlnet, args, acceler
         image_logs.append(
             {"validation_image": validation_image, "images": images, "validation_prompt": validation_prompt}
         )
+    import json
+    with open(os.path.join(output_validation_dir, "validation_info_{}.txt".format(step)), 'w') as f:
+        json.dump(image_logs, f)
 
     for tracker in accelerator.trackers:
         if tracker.name == "tensorboard":
@@ -264,6 +267,12 @@ def parse_args(input_args=None):
         type=str,
         default="controlnet-model",
         help="The output directory where the model predictions and checkpoints will be written.",
+    )
+    parser.add_argument(
+        "--output_validation_dir",
+        type=str,
+        default="controlnet-model-validation",
+        help="The output validation directory where the validation images will be written.",
     )
     parser.add_argument(
         "--cache_dir",
@@ -748,6 +757,8 @@ def main(args):
     if accelerator.is_main_process:
         if args.output_dir is not None:
             os.makedirs(args.output_dir, exist_ok=True)
+        if args.output_validation_dir is not None:
+            os.makedirs(args.output_validation_dir, exist_ok=True)
 
         if args.push_to_hub:
             repo_id = create_repo(
@@ -1074,6 +1085,7 @@ def main(args):
                             accelerator,
                             weight_dtype,
                             global_step,
+                            args.output_validation_dir,
                         )
 
             logs = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
