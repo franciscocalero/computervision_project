@@ -1,4 +1,7 @@
+!pip install git+https://github.com/huggingface/accelerate.git
+
 !pip install -r requirements.txt
+
 !accelerate config default
 !wget https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/controlnet_training/conditioning_image_1.png
 !wget https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/controlnet_training/conditioning_image_2.png
@@ -9,7 +12,7 @@
 
 !accelerate launch train_controlnet.py \
  --pretrained_model_name_or_path="models/v1-5-pruned" \
- --output_dir="path to save model" \
+ --output_dir="new_model" \
  --dataset_name=fusing/fill50k \
  --resolution=512 \
  --learning_rate=1e-5 \
