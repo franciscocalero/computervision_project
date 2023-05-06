@@ -8,10 +8,10 @@
 !wget https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/controlnet_training/conditioning_image_1.png
 !wget https://huggingface.co/datasets/huggingface/documentation-images/resolve/main/diffusers/controlnet_training/conditioning_image_2.png
 
-!mkdir "new_model"
+!mkdir "new_models"
 !mkdir "validation_images"
-!wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned.ckpt
-!mv -v v1-5-pruned.ckpt /content/models/
+# !wget https://huggingface.co/runwayml/stable-diffusion-v1-5/resolve/main/v1-5-pruned.ckpt
+# !mv -v v1-5-pruned.ckpt /content/models/
 
 # !accelerate launch train_controlnet.py \
 #  --pretrained_model_name_or_path="runwayml/stable-diffusion-v1-5" \
