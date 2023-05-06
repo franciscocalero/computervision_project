@@ -131,9 +131,9 @@ def log_validation(vae, text_encoder, tokenizer, unet, controlnet, args, acceler
         image_logs.append(
             {"validation_image": validation_image, "images": images, "validation_prompt": validation_prompt}
         )
-    import json
-    with open(os.path.join(output_validation_dir, "validation_info_{}.txt".format(step)), 'w') as f:
-        json.dump(image_logs, f)
+    import pickle
+    with open(os.path.join(output_validation_dir, "validation_info_{}.txt".format(step)), 'wb') as f:
+        pickle.dump(image_logs, f)
 
     for tracker in accelerator.trackers:
         if tracker.name == "tensorboard":
