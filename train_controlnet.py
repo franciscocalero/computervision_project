@@ -19,6 +19,7 @@ import math
 import os
 import random
 from pathlib import Path
+import pickle
 
 import accelerate
 import numpy as np
@@ -71,7 +72,7 @@ def image_grid(imgs, rows, cols):
     return grid
 
 
-def log_validation(vae, text_encoder, tokenizer, unet, controlnet, args, accelerator, weight_dtype, step, output_validation_dir):
+def log_validation(vae, text_encoder, tokenizer, unet, controlnet, args, accelerator, weight_dtype, step, output_validation_dir, validation_dataset):
     logger.info("Running validation... ")
 
     controlnet = accelerator.unwrap_model(controlnet)
@@ -113,10 +114,49 @@ def log_validation(vae, text_encoder, tokenizer, unet, controlnet, args, acceler
             "number of `args.validation_image` and `args.validation_prompt` should be checked in `parse_args`"
         )
 
+    # Preprocessing the datasets.
+    # We need to tokenize inputs and targets.
+    column_names = validation_dataset.column_names
+
+    # 6. Get the column names for input/target.
+    if args.image_column is None:
+        image_column = column_names[0]
+        logger.info(f"image column defaulting to {image_column}")
+    else:
+        image_column = args.image_column
+        if image_column not in column_names:
+            raise ValueError(
+                f"`--image_column` value '{args.image_column}' not found in dataset columns. Dataset columns are: {', '.join(column_names)}"
+            )
+
+    if args.caption_column is None:
+        caption_column = column_names[1]
+        logger.info(f"caption column defaulting to {caption_column}")
+    else:
+        caption_column = args.caption_column
+        if caption_column not in column_names:
+            raise ValueError(
+                f"`--caption_column` value '{args.caption_column}' not found in dataset columns. Dataset columns are: {', '.join(column_names)}"
+            )
+
+    if args.conditioning_image_column is None:
+        conditioning_image_column = column_names[2]
+        logger.info(f"conditioning image column defaulting to {conditioning_image_column}")
+    else:
+        conditioning_image_column = args.conditioning_image_column
+        if conditioning_image_column not in column_names:
+            raise ValueError(
+                f"`--conditioning_image_column` value '{args.conditioning_image_column}' not found in dataset columns. Dataset columns are: {', '.join(column_names)}"
+            )
+
     image_logs = []
 
-    for validation_prompt, validation_image in zip(validation_prompts, validation_images):
+    for i in validation_dataset:
+        validation_prompt = validation_dataset[i][caption_column]
+        validation_image = validation_dataset[i][conditioning_image_column]
         validation_image = Image.open(validation_image).convert("RGB")
+        real_image = validation_dataset[i][image_column]
+        real_image = Image.open(real_image).convert("RGB")
 
         images = []
 
@@ -129,9 +169,9 @@ def log_validation(vae, text_encoder, tokenizer, unet, controlnet, args, acceler
             images.append(image)
 
         image_logs.append(
-            {"validation_image": validation_image, "images": images, "validation_prompt": validation_prompt}
+            {"validation_image": validation_image, "images": images, "validation_prompt": validation_prompt,
+             'real_image': real_image}
         )
-    import pickle
     with open(os.path.join(output_validation_dir, "validation_info_{}.pickle".format(step)), 'wb') as f:
         pickle.dump(image_logs, f)
 
@@ -697,13 +737,28 @@ def make_train_dataset(args, tokenizer, accelerator):
 
         return examples
 
+    # Create partitions for the datasets
+    df_train, df_test = dataset['train'].train_test_split(test_size=20, seed=132).values()
+    df_train, df_val = df_train.train_test_split(test_size=10, seed=132).values()
+
+    from datasets.dataset_dict import DatasetDict
+    dataset = DatasetDict(
+        {'train': df_train,
+         'val': df_val,
+         'test': df_test})
+
     with accelerator.main_process_first():
         if args.max_train_samples is not None:
             dataset["train"] = dataset["train"].shuffle(seed=args.seed).select(range(args.max_train_samples))
         # Set the training transforms
         train_dataset = dataset["train"].with_transform(preprocess_train)
+    validation_dataset = dataset["val"]
+    test_dataset = dataset["test"]
 
-    return train_dataset
+    with open(os.path.join(args.output_validation_dir, "test_set.pickle"), 'wb') as f:
+        pickle.dump(test_dataset, f)
+
+    return train_dataset, validation_dataset, test_dataset
 
 
 def collate_fn(examples):
@@ -834,7 +889,6 @@ def main(args):
     if args.enable_xformers_memory_efficient_attention:
         if is_xformers_available():
             import xformers
-
             xformers_version = version.parse(xformers.__version__)
             if xformers_version == version.parse("0.0.16"):
                 logger.warn(
@@ -892,7 +946,7 @@ def main(args):
         eps=args.adam_epsilon,
     )
 
-    train_dataset = make_train_dataset(args, tokenizer, accelerator)
+    train_dataset, validation_dataset, test_dataset = make_train_dataset(args, tokenizer, accelerator)
 
     train_dataloader = torch.utils.data.DataLoader(
         train_dataset,
@@ -1121,3 +1175,4 @@ def main(args):
 if __name__ == "__main__":
     args = parse_args()
     main(args)
+

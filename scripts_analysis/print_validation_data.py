@@ -2,7 +2,7 @@
 import pickle
 import matplotlib.pyplot as plt
 
-with open("../validation_data/validation_info_10.pickle", "rb") as f:
+with open("validation_data/validation_info_1000.pickle", "rb") as f:
     image_list = pickle.load(f)
 
 # %%
