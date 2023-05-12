@@ -2,11 +2,11 @@
 https://huggingface.co/docs/diffusers/main/en/conceptual/evaluation
 
 # Data
-Dog set: https://huggingface.co/datasets/JFoz/dog-poses-controlnet-dataset/tree/main/data
-Dog set: https://huggingface.co/datasets/Fiacre/intermediate-animal-poses-controlnet-dataset/tree/main/data
-Small animals: https://huggingface.co/datasets/Fiacre/small-animal-poses-controlnet-dataset/blob/main/data/train-00000-of-00001-fbe07b2b4338b488.parquet
+Dog set: https://huggingface.co/datasets/JFoz/dog-poses-controlnet-dataset
+Dog set: https://huggingface.co/datasets/Fiacre/intermediate-animal-poses-controlnet-dataset
+Small animals: https://huggingface.co/datasets/Fiacre/small-animal-poses-controlnet-dataset
 10K animals: https://huggingface.co/datasets/JFoz/AP10K-poses-controlnet-dataset
-36K animals: https://huggingface.co/datasets/JFoz/APT-36K-poses-controlnet-dataset/tree/main/data
+36K animals: https://huggingface.co/datasets/JFoz/APT-36K-poses-controlnet-dataset
 Poses: https://huggingface.co/datasets/sayakpaul/poses-controlnet-dataset
 
 # Tutorial

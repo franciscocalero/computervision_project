@@ -137,12 +137,12 @@ def log_validation(vae, text_encoder, tokenizer, unet, controlnet, args, acceler
 
     image_logs = []
 
-    for i in validation_dataset:
-        validation_prompt = validation_dataset[i][caption_column]
-        validation_image = validation_dataset[i][conditioning_image_column]
-        validation_image = Image.open(validation_image).convert("RGB")
-        real_image = validation_dataset[i][image_column]
-        real_image = Image.open(real_image).convert("RGB")
+    for image_set in validation_dataset:
+        validation_prompt = image_set[caption_column]
+        validation_image = image_set[conditioning_image_column]
+        validation_image = validation_image.convert("RGB")
+        real_image = image_set[image_column]
+        real_image = real_image.convert("RGB")
 
         images = []
 
